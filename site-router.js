@@ -20,15 +20,19 @@ async function navigate(url,push){
   const scripts=Array.from(content.querySelectorAll('script'));scripts.forEach(s=>s.remove());
   document.head.replaceChildren(...Array.from(next.head.childNodes,n=>document.importNode(n,true)));
   const current=document.getElementById('site-content');
+  current.classList.add('page-leaving');
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)await new Promise(resolve=>setTimeout(resolve,160));
   current.replaceChildren(...Array.from(content.childNodes,n=>document.importNode(n,true)));
   if(push)history.pushState(null,'',url.href);
   // Rebind only the new page's galleries. The shared audio element stays mounted.
   scripts.forEach(source=>{const script=document.createElement('script');for(const a of source.attributes)script.setAttribute(a.name,a.value);script.textContent=source.textContent;current.append(script);});
   focusPage(url);
+  current.classList.remove('page-leaving');
+  window.dispatchEvent(new Event('site-navigated'));
  }catch(error){
   if(push){document.getElementById('music-status').textContent='页面暂时未能打开，请再试一次。';}
   else location.reload();
- }finally{loading=false;document.getElementById('site-content').removeAttribute('aria-busy');}
+ }finally{document.getElementById('site-content').classList.remove('page-leaving');loading=false;document.getElementById('site-content').removeAttribute('aria-busy');}
 }
 document.addEventListener('click',event=>{
  if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
